@@ -1,14 +1,87 @@
 
 $(document).ready(function(){
 
-	var randNum = (function() {
-		var num = getRandomIntInclusive(1,100);
-		return {
-			value: fuction() {
-				return num;
+		var guessCounter = (function() {
+			var privateCounter = 0;
+			function changeBy(val) {
+				privateCounter += val;
 			}
-		};
-	})();
+			return {
+				increment: function() {
+					changeBy(1);
+				},
+				reset: function() {
+					privateCounter = 0;
+				},
+				value: function() {
+					return privateCounter;
+				}
+			};
+		})();
+
+		var gameOver = (function() {
+			var g = false;
+			return {
+				reset: function() {
+					g = false;
+				},
+				yes: function() {
+					g = true;
+				},
+				value: function() {
+					return g;
+				}
+			};
+		})();
+
+		var randNum = (function() {
+			var num = getRandomIntInclusive(1,100);
+			return {
+				reset: function() {
+					num = getRandomIntInclusive(1,100);
+				},
+				value: function() {
+					return num;
+				}
+			};
+		})();
+
+	$('.new').on('click', newGame);
+	$('#guessButton').on('click', function() {
+		console.log('gameOver: ', gameOver.value());
+		if (!gameOver.value()) {
+			var val = validateGuess($('#userGuess').val());
+			if (val) {
+				$('span#count').text(guessCounter.increment());
+				var result = evalGuess(randNum, val);
+				//console.log('result.f :', result.f);
+				//console.log('result.g :', result.g);
+
+				$('h2#feedback').text('love');
+				if (result.g) {
+					gameOver.yes();
+				}
+			}
+		}
+	});
+
+	function newGame() {
+		resetUI();
+
+		guessCounter.reset();
+		gameOver.reset();
+		randNum.reset();
+
+		//console.log('guessCounter: ', guessCounter.value());
+		//console.log('randNum: ', randNum.value());
+		//console.log('gameOver: ', gameOver.value());
+	}
+
+	function resetUI() {
+		$('h2#feedback').text('Make your Guess!');
+		$('span#count').text('0');
+		$('ul#guessList').children().remove();
+	}
 
 	function getRandomIntInclusive(min, max) {
 		min = Math.ceil(min);
@@ -16,36 +89,23 @@ $(document).ready(function(){
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 
-	var guessCounter = (function() {
-		var privateCounter = 0;
-		function changeBy(val) {
-			privateCounter += val;
-		}
-		return {
-			increment: function() {
-				changeBy(1);
-			},
-			value: function() {
-				return privateCounter;
-			}
-		};
-	})();
-
 	function evalGuess(randNum, guessNum){
 		var diffNum = Math.abs(guessNum - randNum);
-		var report = '';
+		var feedback = '';
+		var gameWon = false;
 		if (diffNum == 0){
-			report = 'Got it!';
+			feedback = 'You Won!';
+			gameWon = true;
 		} else if (diffNum < 10) {
-			report = 'Burning up!';
+			feedback = 'Burning Up!';
 		} else if (diffNum < 20) {
-			report = 'Warm';
+			feedback = 'Warm';
 		} else if (diffNum < 50) {
-			report = 'Cool';
+			feedback = 'Cold';
 		} else {
-			report = 'Icy';
+			feedback = 'Icy';
 		}
-		return report;
+		return {f : feedback, g : gameWon};
 	}
 
 	function validateGuess(guessNum){
@@ -54,13 +114,6 @@ $(document).ready(function(){
 		}
 		return NaN;
 	}
-
-//newGame
-//generate RandomNumber save to global
-//increment guess count
-//add guess to ul
-//evaluate guess
-//
 
 	/*--- Display information modal box ---*/
   	$(".what").click(function(){
