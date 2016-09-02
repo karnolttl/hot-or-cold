@@ -46,41 +46,47 @@ $(document).ready(function(){
 			};
 		})();
 
-	$('.new').on('click', newGame);
-	$('#guessButton').on('click', function() {
-		console.log('gameOver: ', gameOver.value());
+	$('li > .new').on('click', newGame);
+	$('form').on('submit', function(evt) {
+		//console.log('gameOver: ', gameOver.value());
+		evt.preventDefault();
 		if (!gameOver.value()) {
 			var val = validateGuess($('#userGuess').val());
 			if (val) {
-				$('span#count').text(guessCounter.increment());
-				var result = evalGuess(randNum, val);
-				//console.log('result.f :', result.f);
-				//console.log('result.g :', result.g);
+				guessCounter.increment();
+				$('span#count').text(guessCounter.value());
+				var prevGuess = Number($('#guessList li:last').text());
+				var result = evalGuess(randNum.value(), val, prevGuess);
+				// console.log('guessCounter: ', guessCounter.value());
+				console.log('randNum: ', randNum.value());
+				// console.log('gameOver: ', gameOver.value());
+				// console.log('result.f :', result.f);
+				// console.log('result.g :', result.g);
 
-				$('h2#feedback').text('love');
+				$('h2#feedback').text(result.f);
 				if (result.g) {
 					gameOver.yes();
 				}
+				$('#guessList').append('<li>' + val + '</li>');
+				$('input#userGuess').val('');
 			}
 		}
+		// prevent submit page reload
+		return false;
 	});
 
 	function newGame() {
 		resetUI();
-
 		guessCounter.reset();
 		gameOver.reset();
 		randNum.reset();
-
-		//console.log('guessCounter: ', guessCounter.value());
-		//console.log('randNum: ', randNum.value());
-		//console.log('gameOver: ', gameOver.value());
 	}
 
 	function resetUI() {
 		$('h2#feedback').text('Make your Guess!');
 		$('span#count').text('0');
 		$('ul#guessList').children().remove();
+		$('input#userGuess').val('');
 	}
 
 	function getRandomIntInclusive(min, max) {
@@ -89,19 +95,23 @@ $(document).ready(function(){
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 
-	function evalGuess(randNum, guessNum){
-		var diffNum = Math.abs(guessNum - randNum);
+	function evalGuess(randNum, curGuess, prevGuess){
+		var curDiff = Math.abs(curGuess - randNum);
+		var prevDiff = 0;
+		if (prevGuess != 0){
+			prevDiff = Math.abs(prevGuess - randNum);
+		}
 		var feedback = '';
 		var gameWon = false;
-		if (diffNum == 0){
+		if (curDiff == 0){
 			feedback = 'You Won!';
 			gameWon = true;
-		} else if (diffNum < 10) {
-			feedback = 'Burning Up!';
-		} else if (diffNum < 20) {
-			feedback = 'Warm';
-		} else if (diffNum < 50) {
-			feedback = 'Cold';
+		} else if (curDiff < 10) {
+				feedback = (curDiff > prevDiff || prevDiff > 10) ? 'Hot' : 'Hotter';
+		} else if (curDiff < 20) {
+				feedback = (curDiff > prevDiff || prevDiff > 20) ? 'Warm' : 'Warmer';
+		} else if (curDiff < 50 || prevDiff > 50) {
+				feedback = (curDiff < prevDiff) ? 'Cold' : 'Colder';
 		} else {
 			feedback = 'Icy';
 		}
