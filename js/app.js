@@ -1,55 +1,56 @@
 
 $(document).ready(function(){
 
-		var guessCounter = (function() {
-			var privateCounter = 0;
-			function changeBy(val) {
-				privateCounter += val;
+	var randNum = (function() {
+		var num = getRandomIntInclusive(1,100);
+		return {
+			reset: function() {
+				num = getRandomIntInclusive(1,100);
+			},
+			value: function() {
+				return num;
 			}
-			return {
-				increment: function() {
-					changeBy(1);
-				},
-				reset: function() {
-					privateCounter = 0;
-				},
-				value: function() {
-					return privateCounter;
-				}
-			};
-		})();
+		};
+	})();
 
-		var gameOver = (function() {
-			var g = false;
-			return {
-				reset: function() {
-					g = false;
-				},
-				yes: function() {
-					g = true;
-				},
-				value: function() {
-					return g;
-				}
-			};
-		})();
+	var guessCounter = (function() {
+		var privateCounter = 0;
+		function changeBy(val) {
+			privateCounter += val;
+		}
+		return {
+			increment: function() {
+				changeBy(1);
+			},
+			reset: function() {
+				privateCounter = 0;
+			},
+			value: function() {
+				return privateCounter;
+			}
+		};
+	})();
 
-		var randNum = (function() {
-			var num = getRandomIntInclusive(1,100);
-			return {
-				reset: function() {
-					num = getRandomIntInclusive(1,100);
-				},
-				value: function() {
-					return num;
-				}
-			};
-		})();
+	var gameOver = (function() {
+		var g = false;
+		return {
+			reset: function() {
+				g = false;
+			},
+			yes: function() {
+				g = true;
+			},
+			value: function() {
+				return g;
+			}
+		};
+	})();
 
+	/*--- Start new game event handler ---*/
 	$('li > .new').on('click', newGame);
-	$('form').on('submit', function(evt) {
-		//console.log('gameOver: ', gameOver.value());
-		evt.preventDefault();
+
+	/*--- Submit event handler ---*/
+	$('form').on('submit', function() {
 		if (!gameOver.value()) {
 			var val = validateGuess($('#userGuess').val());
 			if (val) {
@@ -57,12 +58,6 @@ $(document).ready(function(){
 				$('span#count').text(guessCounter.value());
 				var prevGuess = Number($('#guessList li:last').text());
 				var result = evalGuess(randNum.value(), val, prevGuess);
-				// console.log('guessCounter: ', guessCounter.value());
-				console.log('randNum: ', randNum.value());
-				// console.log('gameOver: ', gameOver.value());
-				// console.log('result.f :', result.f);
-				// console.log('result.g :', result.g);
-
 				$('h2#feedback').text(result.f);
 				if (result.g) {
 					gameOver.yes();
@@ -71,7 +66,7 @@ $(document).ready(function(){
 				$('input#userGuess').val('');
 			}
 		}
-		// prevent submit page reload
+		// prevent page reload from submit event
 		return false;
 	});
 
@@ -96,6 +91,9 @@ $(document).ready(function(){
 	}
 
 	function evalGuess(randNum, curGuess, prevGuess){
+		var hot = 10;
+		var warm = 20;
+		var cold = 40;
 		var curDiff = Math.abs(curGuess - randNum);
 		var prevDiff = 0;
 		if (prevGuess != 0){
@@ -106,12 +104,12 @@ $(document).ready(function(){
 		if (curDiff == 0){
 			feedback = 'You Won!';
 			gameWon = true;
-		} else if (curDiff < 10) {
-				feedback = (curDiff > prevDiff || prevDiff > 10) ? 'Hot' : 'Hotter';
-		} else if (curDiff < 20) {
-				feedback = (curDiff > prevDiff || prevDiff > 20) ? 'Warm' : 'Warmer';
-		} else if (curDiff < 50 || prevDiff > 50) {
-				feedback = (curDiff < prevDiff) ? 'Cold' : 'Colder';
+		} else if (curDiff < hot) {
+				feedback = (curDiff > prevDiff || prevDiff > hot) ? 'Hot' : 'Hotter';
+		} else if (curDiff < warm) {
+				feedback = (curDiff > prevDiff || prevDiff > warm) ? 'Warm' : 'Warmer';
+		} else if (curDiff < cold || prevDiff > cold) {
+				feedback = (curDiff < prevDiff || prevDiff == 0) ? 'Cold' : 'Colder';
 		} else {
 			feedback = 'Icy';
 		}
